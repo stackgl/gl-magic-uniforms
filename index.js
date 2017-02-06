@@ -86,19 +86,40 @@ function define (gl, program, parent, key, name, type) {
   var uploader = getUploadFunctionName(type, name)
   var isMatrix = type.indexOf('mat') === 0
   var value = defaultValue(type, name)
+  var isScalar = !Array.isArray(value)
+
+  // Matrix uniforms have their own function signature that needs
+  // to be used. Scalar values, i.e. floats/bools/ints/samplers,
+  // get cached if their values don't change to minimise GPU bandwidth.
+  // Vectors/matrices are uploaded directly: unsure how it impacts
+  // performance with vectors, but it generally works out slower to
+  // cache/check matrices.
+  var setter = isMatrix
+    ? matrix
+    : isScalar ? cached : basic
 
   Object.defineProperty(parent, key, {
     get: function () { return value },
-    set: isMatrix ? function (_value) {
-      value = _value
-      return gl[uploader](location, false, value)
-    } : function (_value) {
-      value = _value
-      return gl[uploader](location, value)
-    },
+    set: setter,
     enumerable: true,
     configurable: false
   })
+
+  function matrix (_value) {
+    value = _value
+    return gl[uploader](location, false, value)
+  }
+
+  function cached (_value) {
+    if (value === _value) return
+    value = _value
+    return gl[uploader](location, value)
+  }
+
+  function basic (_value) {
+    value = _value
+    return gl[uploader](location, value)
+  }
 }
 
 // TODO: merge with getUploadFunctionName

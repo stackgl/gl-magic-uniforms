@@ -10,6 +10,7 @@ module.exports = Program(`
   precision highp float;
 
   uniform float _float;
+  uniform float _float2;
   uniform bool _bool;
   uniform int _int;
   uniform sampler2D _sampler2D;
@@ -54,7 +55,7 @@ module.exports = Program(`
 
     // We need to include these somewhere in the shader source
     // for them to be consistently detected as uniforms.
-    gl_FragColor.r += _float;
+    gl_FragColor.r += _float * _float2;
     gl_FragColor.r += float(_int);
     gl_FragColor.r += float(_bool);
 

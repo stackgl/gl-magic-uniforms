@@ -3,7 +3,8 @@ var dup = require('dup')
 
 module.exports = MagicUniforms
 
-function MagicUniforms (gl, program, uniforms) {
+function MagicUniforms (gl, program, uniforms, opts) {
+  opts = opts || {}
   uniforms = uniforms || extract(gl, program).uniforms
   uniforms.sort(compareString)
 
@@ -36,7 +37,7 @@ function MagicUniforms (gl, program, uniforms) {
     })
 
     if (chain.length <= 1) {
-      define(gl, program, magic, name, name, type)
+      define(gl, program, magic, name, name, type, opts)
     } else {
       var parent = magic
       for (var t = 0; t < chain.length - 1; t++) {
@@ -45,7 +46,7 @@ function MagicUniforms (gl, program, uniforms) {
         parent = parent[info.key]
       }
 
-      define(gl, program, parent, chain[chain.length - 1].key, name, type)
+      define(gl, program, parent, chain[chain.length - 1].key, name, type, opts)
     }
   }
 
@@ -81,7 +82,9 @@ function parentSetter (parent, key) {
   })
 }
 
-function define (gl, program, parent, key, name, type) {
+function define (gl, program, parent, key, name, type, opts) {
+  var cacheScalars = 'cacheScalars' in opts ? opts.cacheScalars : true
+  var cacheVectors = !!opts.cacheVectors
   var location = gl.getUniformLocation(program, name)
   var uploader = getUploadFunctionName(type, name)
   var isMatrix = type.indexOf('mat') === 0
@@ -94,9 +97,15 @@ function define (gl, program, parent, key, name, type) {
   // Vectors/matrices are uploaded directly: unsure how it impacts
   // performance with vectors, but it generally works out slower to
   // cache/check matrices.
-  var setter = isMatrix
-    ? matrix
-    : isScalar ? cached : basic
+  var setter
+  if (isMatrix) {
+    setter = matrix
+  } else
+  if (isScalar) {
+    setter = cacheScalars ? cachedScalar : basic
+  } else {
+    setter = cacheVectors ? cachedVector(value.length) : basic
+  }
 
   Object.defineProperty(parent, key, {
     get: function () { return value },
@@ -110,13 +119,59 @@ function define (gl, program, parent, key, name, type) {
     return gl[uploader](location, false, value)
   }
 
-  function cached (_value) {
+  function cachedScalar (_value) {
     if (value === _value) return
     value = _value
     return gl[uploader](location, value)
   }
 
+  function cachedVector (size) {
+    switch (size) {
+      case 1: return cachedVector1
+      case 2: return cachedVector2
+      case 3: return cachedVector3
+      case 4: return cachedVector4
+      default: return basic
+    }
+  }
+
   function basic (_value) {
+    value = _value
+    return gl[uploader](location, value)
+  }
+
+  function cachedVector1 (_value) {
+    if (value[0] === _value[0]) return
+    value = _value
+    return gl[uploader](location, value)
+  }
+
+  function cachedVector2 (_value) {
+    if (
+      value[0] === _value[0] &&
+      value[1] === _value[1]
+    ) return
+    value = _value
+    return gl[uploader](location, value)
+  }
+
+  function cachedVector3 (_value) {
+    if (
+      value[0] === _value[0] &&
+      value[1] === _value[1] &&
+      value[2] === _value[2]
+    ) return
+    value = _value
+    return gl[uploader](location, value)
+  }
+
+  function cachedVector4 (_value) {
+    if (
+      value[0] === _value[0] &&
+      value[1] === _value[1] &&
+      value[2] === _value[2] &&
+      value[3] === _value[3]
+    ) return
     value = _value
     return gl[uploader](location, value)
   }

@@ -9,7 +9,7 @@ Create a magic getter/setter object for a given WebGLProgram's uniforms. This pr
 
 ## Usage
 
-### `uniforms = Magic(gl, program[, uniforms])`
+### `uniforms = Magic(gl, program[, uniforms[, opts]])`
 
 * `gl` is the `WebGLRenderingContext` that `program` is attached to.
 * `program` is a `WebGLProgram` instance to modify the uniforms of.
@@ -36,6 +36,11 @@ uniforms.light = [1, 0, 1, 1]
 Uniforms can now be got and set by name, in the same style as documented in [gl-shader](https://github.com/stackgl/gl-shader#uniforms).
 
 _**Note:** `program` must be in use when setting `uniforms`, or unexpected behavior may occur. This is not done by default to avoid an excess of calls to `gl.useProgram`._
+
+Additionally, you can pass in the following options:
+
+* `opts.cacheScalars`: if `true`, scalar uniforms (e.g. `float`, `bool`, `int`) will be cached where possible, reducing the amount of work for the GPU. Defaults to `true`.
+* `opts.cacheVectors`: if `true`, vector uniforms will be cached where possible, provided they're 4 or less elements long. Defaults to `false`, as there are cases where this produces more overhead when enabled depending on how often these values change.
 
 ## License
 

@@ -9,7 +9,11 @@ Create a magic getter/setter object for a given WebGLProgram's uniforms. This pr
 
 ## Usage
 
-### `uniforms = Magic(gl, program[, uniforms[, opts]])`
+```javascript
+var MagicUniforms = require('gl-magic-uniforms')
+```
+
+### `uniforms = MagicUniforms(gl, program[, uniforms[, opts]])`
 
 * `gl` is the `WebGLRenderingContext` that `program` is attached to.
 * `program` is a `WebGLProgram` instance to modify the uniforms of.
@@ -17,7 +21,7 @@ Create a magic getter/setter object for a given WebGLProgram's uniforms. This pr
 Optionally, you can pass in a custom set of `uniforms` objects. This should be in the same format as the results of [gl-shader-extract](https://github.com/mattdesl/gl-shader-extract). If not supplied, uniforms are automatically inferred at runtime by inspecting `program`.
 
 ``` javascript
-var uniforms = require('gl-magic-uniforms')
+var MagicUniforms = require('gl-magic-uniforms')
 
 var canvas = document.createElement('canvas')
 var gl = canvas.getContext('webgl')
